@@ -1,19 +1,22 @@
-FROM zencash/gosu-base:1.10
+FROM zencash/gosu-base:1.11
 
-MAINTAINER cronicc@protonmail.com
+MAINTAINER cronicc@zensystem.io
 
-ARG package=zen-2.0.15-beta1-b583779-amd64.deb
+ARG package=zen-2.0.16-rc1-f185a2d-amd64.deb
 
 COPY $package $package.asc /root/
 
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install apt-utils \
+    && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends dist-upgrade \
     && DEBIAN_FRONTEND=noninteractive apt-get -y --no-install-recommends install ca-certificates curl wget libgomp1 dnsutils \
     && curl -Lo /usr/local/share/ca-certificates/lets-encrypt-x3-cross-signed.crt https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem.txt \
     && echo "e446c5e9dbef9d09ac9f7027c034602492437a05ff6c40011d7235fca639c79a  /usr/local/share/ca-certificates/lets-encrypt-x3-cross-signed.crt" | sha256sum -c - \
     && update-ca-certificates \
     && export GNUPGHOME="$(mktemp -d)" \
-    && gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 4991B669 \
+    && gpg --batch --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys 4991B669 || \
+    gpg --batch --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys 4991B669 || \
+    gpg --batch --keyserver hkp://pgp.mit.edu:80 --recv-keys 4991B669 \
     && gpg --batch --verify /root/$package.asc /root/$package \
     && rm -r "$GNUPGHOME" \
     && dpkg -i /root/$package \
